@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>筆算マスター</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- 1. スタート画面（タイトルと出席番号） -->
+    <div id="screen-start" class="screen active">
+        <h1>筆算マスター</h1>
+
+        <div class="setting-group" style="text-align: center; margin-bottom: 30px;">
+            <label for="student-id" style="font-size: 1.5rem;">出席番号（しゅっせきばんごう）:</label>
+            <input type="number" id="student-id" min="1" max="99" placeholder="例: 1"
+                style="width: 200px; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 12px; border: 2px solid var(--primary-color);">
+        </div>
+
+        <button class="level-btn" style="background-color: var(--primary-color); color: white;"
+            onclick="goToLevelSelect()">次へすすむ</button>
+    </div>
+
+    <!-- 2. レベル選択画面 -->
+    <div id="screen-level" class="screen">
+        <h1>レベルをえらぼう</h1>
+        <div class="level-select">
+            <button class="level-btn" onclick="selectLevel(1)">⭐ くりあがり なし</button>
+            <button class="level-btn" onclick="selectLevel(2)">⭐⭐ くりあがり 1回</button>
+            <button class="level-btn" onclick="selectLevel(3)">⭐⭐⭐ れんぞく くりあがり</button>
+        </div>
+        <button class="home-btn" style="margin-top: 30px; align-self: center;" onclick="goHome()">もどる</button>
+    </div>
+
+    <!-- 3. 問題数選択画面 -->
+    <div id="screen-questions" class="screen">
+        <h1>何問コースにする？</h1>
+        <div class="level-select">
+            <button class="level-btn" style="background-color: #f6ffed;"
+                onclick="startAppWithSettings(2)">2問コース</button>
+            <button class="level-btn" style="background-color: #e6f7ff;"
+                onclick="startAppWithSettings(5)">5問コース</button>
+            <button class="level-btn" style="background-color: #dcfce3;"
+                onclick="startAppWithSettings(10)">10問コース</button>
+            <button class="level-btn" style="background-color: #fff7e6;"
+                onclick="startAppWithSettings(15)">15問コース</button>
+            <button class="level-btn" style="background-color: #fff0f6;"
+                onclick="startAppWithSettings(20)">20問コース</button>
+        </div>
+        <button class="home-btn" style="margin-top: 30px; align-self: center;" onclick="goToLevelSelect()">もどる</button>
+    </div>
+
+    <!-- 2. 学習画面 -->
+    <div id="screen-game" class="screen">
+        <div class="game-header">
+            <span id="question-count">1問目</span>
+            <button class="home-btn" onclick="confirmHome()">HOME</button>
+        </div>
+
+        <div class="main-content">
+            <!-- 筆算エリア -->
+            <div class="hissan-container" id="hissan-container">
+                <div class="hissan-wrapper"
+                    style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                    <!-- ヒント・メッセージエリア（マスの上に移動） -->
+                    <div class="message-box" id="message-box" style="margin-bottom: 20px;"></div>
+                    <div class="hissan-grid" id="hissan-grid">
+                        <!-- ヘッダー -->
+                        <div class="cell header">千の位</div>
+                        <div class="cell header">百の位</div>
+                        <div class="cell header">十の位</div>
+                        <div class="cell header">一の位</div>
+
+                        <!-- 1行目: かけられる数 -->
+                        <div class="cell empty"></div>
+                        <div class="cell empty"></div>
+                        <div class="cell num"><span class="val" id="val-r1-10"></span></div>
+                        <div class="cell num"><span class="val" id="val-r1-1"></span></div>
+
+                        <!-- 2行目: かける数 -->
+                        <div class="cell empty"></div>
+                        <div class="cell empty symbol">×</div>
+                        <div class="cell num"><span class="val" id="val-r2-10"></span></div>
+                        <div class="cell num"><span class="val" id="val-r2-1"></span></div>
+
+                        <!-- 1本目のスワイプ線（2行目の下端に重なるかたちで配置） -->
+                        <div class="swipe-line-container row-after-2" id="swipe-container-1">
+                            <div class="swipe-line" id="swipe-line-1"></div>
+                            <div class="ruler" id="ruler-1"></div>
+                        </div>
+
+                        <!-- 3行目: 1段目の部分積 -->
+                        <div class="cell input-cell" id="cell-r3-1000" onclick="selectCell('r3-1000')">
+                            <span class="val" id="val-r3-1000"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r3-100" onclick="selectCell('r3-100')">
+                            <span class="val" id="val-r3-100"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r3-10" onclick="selectCell('r3-10')">
+                            <span class="carry mul" id="carry-mul-r3-10"></span><span class="val" id="val-r3-10"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r3-1" onclick="selectCell('r3-1')">
+                            <span class="val" id="val-r3-1"></span>
+                        </div>
+
+                        <!-- 4行目: 2段目の部分積 -->
+                        <div class="cell input-cell" id="cell-r4-1000" onclick="selectCell('r4-1000')">
+                            <span class="carry add" id="carry-add-r4-1000"></span><span class="val"
+                                id="val-r4-1000"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r4-100" onclick="selectCell('r4-100')">
+                            <span class="carry mul" id="carry-mul-r4-100"></span><span class="carry add"
+                                id="carry-add-r4-100"></span><span class="val" id="val-r4-100"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r4-10" onclick="selectCell('r4-10')">
+                            <span class="val" id="val-r4-10"></span>
+                        </div>
+                        <div class="cell disabled"></div>
+
+                        <!-- 2本目のスワイプ線 -->
+                        <div class="swipe-line-container row-after-4" id="swipe-container-2">
+                            <div class="swipe-line" id="swipe-line-2"></div>
+                            <div class="ruler" id="ruler-2"></div>
+                        </div>
+
+                        <!-- 5行目: 合計 -->
+                        <div class="cell input-cell" id="cell-r5-1000" onclick="selectCell('r5-1000')">
+                            <span class="val" id="val-r5-1000"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r5-100" onclick="selectCell('r5-100')">
+                            <span class="val" id="val-r5-100"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r5-10" onclick="selectCell('r5-10')">
+                            <span class="val" id="val-r5-10"></span>
+                        </div>
+                        <div class="cell input-cell" id="cell-r5-1" onclick="selectCell('r5-1')">
+                            <span class="val" id="val-r5-1"></span>
+                        </div>
+
+                        <!-- はなまる演出用 -->
+                        <img src="hanamaru.png" id="hanamaru" class="hanamaru" alt="はなまる">
+
+                        <!-- 独立した手書き風OKボタン（グリッド基準で配置するため中に移動） -->
+                        <button id="floating-ok-btn" class="floating-ok-btn" onclick="checkAnswer()">OK</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側の入力・テンキーエリア -->
+            <div class="input-area">
+                <div class="numpad-container">
+                    <div class="numpad">
+                        <button class="num-btn" onclick="inputNum(1)">1</button>
+                        <button class="num-btn" onclick="inputNum(2)">2</button>
+                        <button class="num-btn" onclick="inputNum(3)">3</button>
+                        <button class="num-btn" onclick="inputNum(4)">4</button>
+                        <button class="num-btn" onclick="inputNum(5)">5</button>
+                        <button class="num-btn" onclick="inputNum(6)">6</button>
+                        <button class="num-btn" onclick="inputNum(7)">7</button>
+                        <button class="num-btn" onclick="inputNum(8)">8</button>
+                        <button class="num-btn" onclick="inputNum(9)">9</button>
+                        <button class="num-btn clear" onclick="clearInput()">C</button>
+                        <button class="num-btn zero" onclick="inputNum(0)">0</button>
+                        <div class="num-btn-placeholder"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 結果画面 -->
+    <div id="screen-result" class="screen">
+        <h2>けっか発表</h2>
+        <div id="result-text"></div>
+        <button class="btn" onclick="goHome()">スタートにもどる</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

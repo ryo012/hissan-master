@@ -1,0 +1,522 @@
+:root {
+    --primary-color: #4CAF50;
+    --bg-color: #f0f4f8;
+    --text-color: #333;
+    --grid-bg: #fff;
+    --grid-border: #333;
+    --active-border: #FF9800;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Hiragino Maru Gothic ProN', 'Rounded M+ 1c', sans-serif;
+    touch-action: manipulation;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    max-width: 1024px;
+    height: 100%;
+    padding: 20px;
+    flex-direction: column;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* スタート画面 */
+#screen-start {
+    align-items: center;
+    justify-content: center;
+}
+
+#screen-start h1 {
+    font-size: 3rem;
+    margin-bottom: 40px;
+}
+
+.level-select {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.level-btn {
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    border-radius: 12px;
+    border: none;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+/* ゲーム画面 */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+}
+
+.hissan-container {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.hissan-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    grid-template-rows: 40px repeat(5, 80px);
+    position: relative;
+    /* スワイプ線を絶対配置する基準 */
+    border: 2px solid var(--grid-border);
+    width: max-content;
+    /* メッセージボックスの幅に引っ張られないようにする */
+    margin: 0 auto;
+}
+
+.cell {
+    border: 1px solid var(--grid-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    position: relative;
+    /* 繰り上がりマスの絶対配置の基準 */
+}
+
+.cell.header {
+    font-size: 1rem;
+    background: #f8f9fa;
+}
+
+.cell.symbol {
+    font-size: 2.5rem;
+}
+
+.cell.disabled {
+    background: #e9ecef;
+}
+
+/* 繰り上がりマス */
+.carry {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #ff4d4f;
+    border-radius: 4px;
+    color: #ff4d4f;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff0f6;
+    cursor: pointer;
+}
+
+.carry.mul {
+    top: 4px;
+    right: 4px;
+    /* 左上から右上へ変更 */
+}
+
+.carry.add {
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-color: #1890ff;
+    color: #1890ff;
+    background: #e6f7ff;
+}
+
+/* 選択中のセル */
+.input-cell {
+    cursor: pointer;
+}
+
+.input-cell.active {
+    background-color: #fff7e6;
+    border: 3px solid var(--active-border);
+    z-index: 10;
+}
+
+.carry.active {
+    border-width: 2px;
+    background-color: #ffd8bf;
+    z-index: 11;
+}
+
+/* 間違えたセル */
+.input-cell.error {
+    background-color: #fff0f6;
+    border: 3px solid #ff4d4f;
+    animation: shake 0.4s ease-in-out;
+}
+
+.carry.error {
+    background-color: #fff0f6;
+    border: 2px solid #ff4d4f;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-4px);
+    }
+
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+/* スワイプ線コンテナ */
+.swipe-line-container {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    /* スワイプ判定用の高さ */
+    margin-top: -15px;
+    /* 上のセルの境界に中心を合わせる */
+    z-index: 20;
+    cursor: pointer;
+}
+
+.row-after-2 {
+    top: calc(40px + 160px);
+}
+
+/* header + row1 + row2 */
+.row-after-4 {
+    top: calc(40px + 320px);
+}
+
+/* header + row1~4 */
+
+/* 実際の線（未描画時は透明、スワイプで青くなる） */
+.swipe-line {
+    width: 0%;
+    height: 4px;
+    background-color: #1890ff;
+    position: absolute;
+    top: 13px;
+    left: 0;
+    transition: width 0.3s ease;
+}
+
+.swipe-line.drawn {
+    width: 100%;
+}
+
+.swipe-line-container::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: rgba(24, 144, 255, 0.2);
+    /* ガイド線 */
+}
+
+/* 定規（スワイプ誘導用） */
+.ruler {
+    position: absolute;
+    top: -5px;
+    left: 0;
+    width: 60px;
+    height: 40px;
+    background-color: rgba(255, 235, 59, 0.6);
+    border: 2px solid #fbc02d;
+    border-radius: 4px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    /* メモリの模様 */
+    background-image: repeating-linear-gradient(90deg,
+            transparent,
+            transparent 8px,
+            #fbc02d 8px,
+            #fbc02d 10px);
+    pointer-events: none;
+    /* コンテナのイベントを邪魔しない */
+    display: none;
+    /* 初期状態は非表示 */
+    z-index: 25;
+}
+
+.swipe-line-container.active .ruler {
+    display: block;
+}
+
+/* 定規用発光アニメーション */
+.ruler.glow {
+    animation: glowing-ok 1.5s infinite;
+    cursor: grab;
+}
+
+/* はなまる演出 (画像版) */
+.hanamaru {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 250px;
+    height: auto;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+
+.hanamaru.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.input-area {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message-box {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    min-height: 80px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 2px solid var(--primary-color);
+}
+
+/* テンキー・汎用ボタン */
+.numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.num-btn {
+    padding: 20px 0;
+    font-size: 2rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    background-color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d1d5db;
+}
+
+.num-btn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.num-btn.clear {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.num-btn.ok {
+    background-color: #dcfce3;
+    color: #22c55e;
+}
+
+.home-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #eee;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* モーダル (設定ポップアップ) */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+
+/* 独立したOKボタン (右側に配置) */
+.floating-ok-btn {
+    position: absolute;
+    right: -100px;
+    /* グリッドの右側に浮遊させる */
+    bottom: 10px;
+    /* 下揃え */
+    width: 80px;
+    height: 60px;
+    background-color: transparent;
+    border: 3px solid #ccc;
+    border-radius: 12px;
+    color: #ccc;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    opacity: 0.5;
+    /* 押さなくていい時は目立たないように */
+}
+
+/* 押さないといけない時に光るアニメーション */
+@keyframes glowing-ok {
+    0% {
+        box-shadow: 0 0 5px #fbbf24;
+        border-color: #fbbf24;
+        color: #fbbf24;
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 20px #fbbf24, 0 0 30px #fbbf24;
+        border-color: #fbbf24;
+        color: #fbbf24;
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    100% {
+        box-shadow: 0 0 5px #fbbf24;
+        border-color: #fbbf24;
+        color: #fbbf24;
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.floating-ok-btn.glow {
+    animation: glowing-ok 1.5s infinite;
+    cursor: pointer;
+}
+
+.floating-ok-btn.glow:active {
+    transform: scale(0.95);
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.setting-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.setting-group input,
+.setting-group select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.2rem;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+}
+
+.modal-actions {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.cancel-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.start-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* 追加のスタイル（3画面構成用） */
+#screen-level,
+#screen-questions {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+#screen-level h1,
+#screen-questions h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    color: var(--primary-color);
+}
