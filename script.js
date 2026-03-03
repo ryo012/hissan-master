@@ -126,7 +126,7 @@ function generateQuestion() {
     document.getElementById('swipe-line-2').style.width = '0%';
     document.getElementById('ruler-1').style.left = '0';
     document.getElementById('ruler-2').style.left = '0';
-    document.getElementById('hanamaru').classList.remove('show');
+    document.querySelectorAll('.hanamaru').forEach(el => el.classList.remove('show'));
 
     // 繰り上がりマスの表示出し分け
     setupCarries(n1, n2);
@@ -505,12 +505,9 @@ function checkSum() {
         setHint("だいせいかい！！ よくがんばったね。");
         gameState = 5;
 
-        // 4種類のはなまる画像からランダムに1つ選ぶ
-        const hanamaruImg = document.getElementById('hanamaru');
-        const hanamaruList = ['hanamaru.png', 'hanamaru2.jpg', 'hanamaru3.jpg', 'hanamaru4.jpg'];
-        const randomSrc = hanamaruList[Math.floor(Math.random() * hanamaruList.length)];
-        hanamaruImg.src = randomSrc;
-        hanamaruImg.classList.add('show');
+        // 4種類のはなまる画像からランダムに1つ選んで表示する
+        const randomId = 'hanamaru-' + (Math.floor(Math.random() * 4) + 1);
+        document.getElementById(randomId).classList.add('show');
 
         // 選択解除
         activeElementId = null;
