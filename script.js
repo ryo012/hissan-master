@@ -505,8 +505,8 @@ function checkSum() {
         setHint("だいせいかい！！ よくがんばったね。");
         gameState = 5;
 
-        // 4種類のはなまる画像からランダムに1つ選んで表示する
-        const randomId = 'hanamaru-' + (Math.floor(Math.random() * 4) + 1);
+        // 5種類のはなまる画像からランダムに1つ選んで表示する
+        const randomId = 'hanamaru-' + (Math.floor(Math.random() * 5) + 1);
         document.getElementById(randomId).classList.add('show');
 
         // 選択解除
