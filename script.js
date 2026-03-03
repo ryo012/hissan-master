@@ -507,7 +507,7 @@ function checkSum() {
 
         // 4種類のはなまる画像からランダムに1つ選ぶ
         const hanamaruImg = document.getElementById('hanamaru');
-        const hanamaruList = ['hanamaru.png', 'hanamaru2.png', 'hanamaru3.png', 'hanamaru4.png'];
+        const hanamaruList = ['hanamaru.png', 'hanamaru2.jpg', 'hanamaru3.jpg', 'hanamaru4.jpg'];
         const randomSrc = hanamaruList[Math.floor(Math.random() * hanamaruList.length)];
         hanamaruImg.src = randomSrc;
         hanamaruImg.classList.add('show');
