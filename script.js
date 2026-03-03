@@ -1,5 +1,5 @@
 // GASデプロイ後のWebアプリURLをここに貼り付けてください
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw2cXbMQzNfMEAoEy85lF391xBMRX7uS-KB3sG_evN1NvZEcTE1OI0ZfVq83WV3U3ybCg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxYo7Wmb-MasQ8hk77Jbi_uXlEaMq8jkevr6avQ8zOfOD_QH4BWZkHoChmRnZCL4dnx3g/exec";
 
 // グローバル変数
 let currentLevel = 1;
