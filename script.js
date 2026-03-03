@@ -504,7 +504,13 @@ function checkSum() {
     if (isCorrect) {
         setHint("だいせいかい！！ よくがんばったね。");
         gameState = 5;
-        document.getElementById('hanamaru').classList.add('show');
+
+        // 4種類のはなまる画像からランダムに1つ選ぶ
+        const hanamaruImg = document.getElementById('hanamaru');
+        const hanamaruList = ['hanamaru.png', 'hanamaru2.png', 'hanamaru3.png', 'hanamaru4.png'];
+        const randomSrc = hanamaruList[Math.floor(Math.random() * hanamaruList.length)];
+        hanamaruImg.src = randomSrc;
+        hanamaruImg.classList.add('show');
 
         // 選択解除
         activeElementId = null;
