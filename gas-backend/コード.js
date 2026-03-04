@@ -131,7 +131,8 @@ function getHtmlContent() {
     /* ブロック積み上げエリア */
     .blocks-container {
       width: 100%;
-      height: 300px;
+      min-height: 300px;
+      max-height: 60vh; /* 画面の約6割まで広がり、それ以上はスクロール */
       background-color: #e3f2fd;
       border-radius: 15px;
       margin: 20px 0;
@@ -142,13 +143,13 @@ function getHtmlContent() {
       align-content: flex-start;
       gap: 2px;
       padding: 5px;
-      overflow: hidden;
+      overflow-y: auto; /* はみ出たらスクロール可能に */
     }
     
     /* 個別のブロック（出席番号表示用） */
     .block {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       background: radial-gradient(circle at top left, #ffca28, #f57f17);
       border: 1px solid #ff6f00;
       border-radius: 6px;
@@ -176,8 +177,8 @@ function getHtmlContent() {
     // 画面ロード時に初回のデータ取得を行う
     window.onload = function() {
       fetchTokens();
-      // 10秒ごとに非同期でデータを取得（画面全体はリロードしない）
-      setInterval(fetchTokens, 10000);
+      // 3秒ごとに非同期でデータを取得（ほぼリアルタイム）
+      setInterval(fetchTokens, 3000);
     };
 
     function fetchTokens() {
