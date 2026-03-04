@@ -3,33 +3,33 @@ const TARGET_TOKEN = 1000;
 
 function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
+
   try {
     var data = JSON.parse(e.postData.contents);
     var date = new Date();
     var formattedDate = Utilities.formatDate(date, "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
-    
+
     // レベルを数値に変換（例: "1" -> 1）
     var levelNum = parseInt(data.level, 10);
     // 問題数を数値に変換
     var questions = parseInt(data.questions, 10);
-    
+
     // トークン計算ロジック: レベル × 問題数
     var earnedToken = levelNum * questions;
 
     var levelStr = "レベル" + data.level;
     var comment = data.questions + "問クリアしました！";
-    
+
     // スプレッドシートに新しい行として追加
     // 順番: [日時, 出席番号, レベル, 出題数, コメント, 獲得トークン]
     sheet.appendRow([formattedDate, data.studentId, levelStr, data.questions, comment, earnedToken]);
-    
+
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
       message: "Data recorded successfully",
       token: earnedToken
     })).setMimeType(ContentService.MimeType.JSON);
-    
+
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({
       status: "error",
@@ -45,20 +45,27 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// 現在の合計トークン数をスプレッドシートから計算する関数（画面からの非同期呼び出し用）
-function getTotalToken() {
+// 現在の合計トークンと、それぞれのトークンを誰が稼いだか（出席番号）の配列を取得する関数
+// 画面からの非同期呼び出し用
+function getTokenDetails() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
-  
+
+  // 2列目（インデックス1）が出席番号
   // 6列目（インデックス5）がトークン数
-  var total = 0;
+  var tokens = [];
   for (var i = 1; i < data.length; i++) { // 1行目はヘッダーと仮定（またはデータ開始行）
+    var studentId = data[i][1];
     var tokenValue = parseInt(data[i][5], 10);
-    if (!isNaN(tokenValue)) {
-      total += tokenValue;
+
+    // トークン数が有効な数値の場合、その数だけ出席番号のブロックを追加
+    if (!isNaN(tokenValue) && tokenValue > 0) {
+      for (var j = 0; j < tokenValue; j++) {
+        tokens.push(studentId);
+      }
     }
   }
-  return total;
+  return tokens;
 }
 
 // 簡単なダッシュボードのHTMLを生成する関数
@@ -138,16 +145,24 @@ function getHtmlContent() {
       overflow: hidden;
     }
     
-    /* 個別のブロック */
+    /* 個別のブロック（出席番号表示用） */
     .block {
-      width: 30px;
-      height: 30px;
+      width: 40px;
+      height: 40px;
       background: radial-gradient(circle at top left, #ffca28, #f57f17);
       border: 1px solid #ff6f00;
-      border-radius: 4px;
+      border-radius: 6px;
       box-shadow: inset -2px -2px 4px rgba(0,0,0,0.2), 2px 2px 4px rgba(0,0,0,0.3);
       animation: dropBtn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
       opacity: 0; /* アニメーション開始前は透明 */
+      
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 1px #d84315;
     }
     
     @keyframes dropBtn {
@@ -156,7 +171,7 @@ function getHtmlContent() {
     }
   </style>
   <script>
-    let currentTokenCount = 0;
+    let currentTokens = [];
     
     // 画面ロード時に初回のデータ取得を行う
     window.onload = function() {
@@ -166,30 +181,41 @@ function getHtmlContent() {
     };
 
     function fetchTokens() {
-      // GASのサーバー側関数(getTotalToken)を呼び出す
-      google.script.run.withSuccessHandler(updateUI).getTotalToken();
+      // GASのサーバー側関数(getTokenDetails)を呼び出す
+      google.script.run.withSuccessHandler(updateUI).getTokenDetails();
     }
     
     // データ取得成功時にUIを更新する
-    function updateUI(newTokenCount) {
-      if (newTokenCount > currentTokenCount) {
+    // tokenArray は [ "1番", "1番", "2番", ... ] のような出席番号の配列
+    function updateUI(tokenArray) {
+      if (!tokenArray) return;
+      
+      const newTokenCount = tokenArray.length;
+      
+      // 数が増えている場合のみ描画を追加
+      if (newTokenCount > currentTokens.length) {
         document.getElementById("token-display").textContent = newTokenCount;
         
-        // 増えた分のブロックを追加描画する
-        const blocksToAdd = newTokenCount - currentTokenCount;
         const container = document.getElementById("blocks-area");
         
-        for(let i=0; i<blocksToAdd; i++) {
+        // 新しく増えた分だけループでブロック生成
+        for (let i = currentTokens.length; i < newTokenCount; i++) {
           // デモ用に見栄えを考慮し、最大500個程度で描画をストップ（ブラウザ負荷軽減）
           if (container.children.length > 500) break; 
           
           let block = document.createElement("div");
           block.className = "block";
+          // 出席番号をブロックに印字
+          block.textContent = tokenArray[i] || "";
+          
           // 少しずつ時間差で落ちてくるアニメーション
-          block.style.animationDelay = (i * 0.05) + "s";
+          // indexの差分を使って遅延を計算
+          let delayIndex = i - currentTokens.length;
+          block.style.animationDelay = (delayIndex * 0.05) + "s";
+          
           container.appendChild(block);
         }
-        currentTokenCount = newTokenCount;
+        currentTokens = tokenArray;
       }
     }
   </script>
@@ -198,10 +224,9 @@ function getHtmlContent() {
   <h1>みんなで積もう！トークンタワー</h1>
   
   <div class="rules">
-    <div class="rule-badge">レベル1<br>1問 = <span>1</span>トークン</div>
-    <div class="rule-badge">レベル2<br>1問 = <span>2</span>トークン</div>
-    <div class="rule-badge">レベル3<br>1問 = <span>3</span>トークン</div>
-    <div class="rule-badge">レベル4<br>1問 = <span>4</span>トークン</div>
+    <div class="rule-badge">レベル1<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">繰り上がりなし</span>1問 = <span>1</span>トークン</div>
+    <div class="rule-badge">レベル2<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">繰り上がりあり</span>1問 = <span>2</span>トークン</div>
+    <div class="rule-badge">レベル3<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">連続繰り上がり</span>1問 = <span>3</span>トークン</div>
   </div>
   
   <div class="container">
