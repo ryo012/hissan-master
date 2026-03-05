@@ -633,6 +633,33 @@ function sendResultToGAS() {
         });
 }
 
+// 途中で送信して終わる関数を追加
+function submitEarly() {
+    const solvedCount = currentQuestion - 1;
+    if (solvedCount === 0) {
+        alert("まだ1問もクリアしていません！\nまずは1問解いてみよう！");
+        return;
+    }
+
+    if (confirm(`ここまでで ${solvedCount}問 クリアしました。\n先生に結果をおくって終わりにしますか？`)) {
+        // GASへ送信するために一時的に目標問題数を上書き（提出量として扱う）
+        const originalTarget = targetQuestions;
+        targetQuestions = solvedCount;
+        sendResultToGAS();
+        targetQuestions = originalTarget; // 元に戻しておく
+
+        // 結果画面へ遷移
+        showScreen('screen-result');
+        document.getElementById('result-text').textContent = `${solvedCount}問クリア！`;
+
+        // メッセージを書き換え
+        const resultMsg = document.getElementById('result-message');
+        if (resultMsg) {
+            resultMsg.innerHTML = "先生に結果をおくりました！<br>よくがんばったね！";
+        }
+    }
+}
+
 // ホームに戻る（オプション）処理の修正
 function goHome() {
     showScreen('screen-start');
