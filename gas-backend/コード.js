@@ -52,16 +52,25 @@ function getTokenDetails() {
   var data = sheet.getDataRange().getValues();
 
   // 2列目（インデックス1）が出席番号
+  // 3列目（インデックス2）がレベル（例: "レベル1", "レベル2"）
   // 6列目（インデックス5）がトークン数
   var tokens = [];
   for (var i = 1; i < data.length; i++) { // 1行目はヘッダーと仮定（またはデータ開始行）
     var studentId = data[i][1];
+    var levelStr = data[i][2];
     var tokenValue = parseInt(data[i][5], 10);
 
-    // トークン数が有効な数値の場合、その数だけ出席番号のブロックを追加
+    // "レベル1" の文字列から数字だけを取り出す
+    var levelNum = 1; // デフォルト
+    if (levelStr && typeof levelStr === 'string' && levelStr.indexOf('レベル') > -1) {
+      levelNum = parseInt(levelStr.replace('レベル', ''), 10);
+      if (isNaN(levelNum)) levelNum = 1;
+    }
+
+    // トークン数が有効な数値の場合、その数だけ出席番号とレベルのオブジェクトを追加
     if (!isNaN(tokenValue) && tokenValue > 0) {
       for (var j = 0; j < tokenValue; j++) {
-        tokens.push(studentId);
+        tokens.push({ id: studentId, level: levelNum });
       }
     }
   }
@@ -146,12 +155,10 @@ function getHtmlContent() {
       overflow-y: auto; /* はみ出たらスクロール可能に */
     }
     
-    /* 個別のブロック（出席番号表示用） */
+    /* 個別のブロック（出席番号表示用）の基本スタイル */
     .block {
       width: 20px;
       height: 20px;
-      background: radial-gradient(circle at top left, #ffca28, #f57f17);
-      border: 1px solid #ff6f00;
       border-radius: 4px;
       box-shadow: inset -1px -1px 3px rgba(0,0,0,0.2), 1px 1px 3px rgba(0,0,0,0.3);
       animation: dropBtn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -163,7 +170,27 @@ function getHtmlContent() {
       font-size: 0.6rem;
       font-weight: bold;
       color: #fff;
+    }
+
+    /* レベル1: オレンジ */
+    .level-1 {
+      background: radial-gradient(circle at top left, #ffca28, #f57f17);
+      border: 1px solid #ff6f00;
       text-shadow: 1px 1px 1px #d84315;
+    }
+
+    /* レベル2: 紫 */
+    .level-2 {
+      background: radial-gradient(circle at top left, #ba68c8, #7b1fa2);
+      border: 1px solid #4a148c;
+      text-shadow: 1px 1px 1px #4a148c;
+    }
+
+    /* レベル3: 黒 */
+    .level-3 {
+      background: radial-gradient(circle at top left, #9e9e9e, #212121);
+      border: 1px solid #000000;
+      text-shadow: 1px 1px 1px #000000;
     }
     
     @keyframes dropBtn {
@@ -187,7 +214,7 @@ function getHtmlContent() {
     }
     
     // データ取得成功時にUIを更新する
-    // tokenArray は [ "1番", "1番", "2番", ... ] のような出席番号の配列
+    // tokenArray は [{id: "1番", level: 1}, {id: "2番", level: 2}, ... ] のようなオブジェクトの配列
     function updateUI(tokenArray) {
       if (!tokenArray) return;
       
@@ -204,10 +231,14 @@ function getHtmlContent() {
           // デモ用に見栄えを考慮し、最大500個程度で描画をストップ（ブラウザ負荷軽減）
           if (container.children.length > 500) break; 
           
+          let blockData = tokenArray[i] || { id: "", level: 1 };
+          
           let block = document.createElement("div");
-          block.className = "block";
+          // 基本クラス + レベル別カラークラスを付与
+          block.className = "block level-" + blockData.level;
+          
           // 出席番号をブロックに印字
-          block.textContent = tokenArray[i] || "";
+          block.textContent = blockData.id;
           
           // 少しずつ時間差で落ちてくるアニメーション
           // indexの差分を使って遅延を計算
