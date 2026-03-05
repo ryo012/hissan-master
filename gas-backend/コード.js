@@ -179,18 +179,19 @@ function getHtmlContent() {
       text-shadow: 1px 1px 1px #d84315;
     }
 
-    /* レベル2: 紫 */
+    /* レベル2: 緑 */
     .level-2 {
-      background: radial-gradient(circle at top left, #ba68c8, #7b1fa2);
-      border: 1px solid #4a148c;
-      text-shadow: 1px 1px 1px #4a148c;
+      background: radial-gradient(circle at top left, #81c784, #388e3c);
+      border: 1px solid #1b5e20;
+      text-shadow: 1px 1px 1px #1b5e20;
     }
 
-    /* レベル3: 黒 */
+    /* レベル3: 黒に金縁 */
     .level-3 {
-      background: radial-gradient(circle at top left, #9e9e9e, #212121);
-      border: 1px solid #000000;
+      background: radial-gradient(circle at top left, #616161, #212121);
+      border: 1.5px solid #ffca28; /* 金縁 */
       text-shadow: 1px 1px 1px #000000;
+      box-shadow: inset -1px -1px 3px rgba(0,0,0,0.5), 0 0 5px rgba(255,202,40,0.8); /* 金色の淡い光沢 */
     }
     
     @keyframes dropBtn {
