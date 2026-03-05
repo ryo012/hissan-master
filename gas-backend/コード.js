@@ -148,8 +148,8 @@ function getHtmlContent() {
     
     /* 個別のブロック（出席番号表示用） */
     .block {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       background: radial-gradient(circle at top left, #ffca28, #f57f17);
       border: 1px solid #ff6f00;
       border-radius: 4px;
@@ -160,7 +160,7 @@ function getHtmlContent() {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.7rem;
+      font-size: 0.6rem;
       font-weight: bold;
       color: #fff;
       text-shadow: 1px 1px 1px #d84315;
