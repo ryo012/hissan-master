@@ -148,19 +148,19 @@ function getHtmlContent() {
     
     /* 個別のブロック（出席番号表示用） */
     .block {
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       background: radial-gradient(circle at top left, #ffca28, #f57f17);
       border: 1px solid #ff6f00;
-      border-radius: 6px;
-      box-shadow: inset -2px -2px 4px rgba(0,0,0,0.2), 2px 2px 4px rgba(0,0,0,0.3);
+      border-radius: 4px;
+      box-shadow: inset -1px -1px 3px rgba(0,0,0,0.2), 1px 1px 3px rgba(0,0,0,0.3);
       animation: dropBtn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-      opacity: 0; /* アニメーション開始前は透明 */
+      opacity: 0;
       
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 0.7rem;
       font-weight: bold;
       color: #fff;
       text-shadow: 1px 1px 1px #d84315;
