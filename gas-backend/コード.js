@@ -9,20 +9,26 @@ function doPost(e) {
     var date = new Date();
     var formattedDate = Utilities.formatDate(date, "Asia/Tokyo", "yyyy/MM/dd HH:mm:ss");
 
-    // レベルを数値に変換（例: "1" -> 1）
-    var levelNum = parseInt(data.level, 10);
-    // 問題数を数値に変換
-    var questions = parseInt(data.questions, 10);
+    var levelStr, comment, earnedToken;
+    var historyRecord = data.history || "";
 
-    // トークン計算ロジック: レベル × 問題数
-    var earnedToken = levelNum * questions;
-
-    var levelStr = "レベル" + data.level;
-    var comment = data.questions + "問クリアしました！";
+    if (data.appType === "kuku-plus") {
+      levelStr = "九九＋繰り上がり";
+      // kuku-plusアプリからの送信時は、アプリ側で計算したトークン数を採用する
+      earnedToken = parseInt(data.tokens, 10);
+      comment = data.questions + "問正解！（九九+繰り上がり）";
+    } else {
+      // 従来の筆算アプリからの送信
+      var levelNum = parseInt(data.level, 10);
+      var questions = parseInt(data.questions, 10);
+      earnedToken = levelNum * questions;
+      levelStr = "レベル" + data.level;
+      comment = data.questions + "問クリアしました！";
+    }
 
     // スプレッドシートに新しい行として追加
-    // 順番: [日時, 出席番号, レベル, 出題数, コメント, 獲得トークン]
-    sheet.appendRow([formattedDate, data.studentId, levelStr, data.questions, comment, earnedToken]);
+    // 順番: [日時, 出席番号, レベル, 出題数, コメント, 獲得トークン, 履歴(kuku-plus用)]
+    sheet.appendRow([formattedDate, data.studentId, levelStr, data.questions, comment, earnedToken, historyRecord]);
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
