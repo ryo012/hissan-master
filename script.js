@@ -1,5 +1,5 @@
 // GASデプロイ後のWebアプリURLをここに貼り付けてください
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzwP8AE9S4gHtFuYvV9_2sz7usf0-DDvjuAJTslrQPM5jBS0n7ArvQ9M1FThpoCzDJYAg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxQF8ChGaNf8s6BqgopSeSlkn1e0bxQPjIAWaB1smfr3_FHWmF3fIV0ZbfmVRXIdvcP6w/exec";
 
 // グローバル変数
 let currentLevel = 1;
@@ -80,21 +80,31 @@ function countCarries(n1, n2) {
     return carries + sumCarries;
 }
 
-// 問題生成
+// 次の問題を生成してUIをリセットする
 function generateQuestion() {
     clearAllInputs();
 
-    let found = false;
     let n1, n2;
-    while (!found) {
-        n1 = Math.floor(Math.random() * 90) + 10; // 10~99
+    if (currentLevel === 1) { // 繰り上がりなし
+        do {
+            n1 = Math.floor(Math.random() * 90) + 10;
+            n2 = Math.floor(Math.random() * 90) + 10;
+        } while (
+            (n1 % 10) * (n2 % 10) >= 10 ||
+            Math.floor(n1 / 10) * (n2 % 10) >= 10 ||
+            (n1 % 10) * Math.floor(n2 / 10) >= 10 ||
+            Math.floor(n1 / 10) * Math.floor(n2 / 10) >= 10 ||
+            ((n1 % 10) * Math.floor(n2 / 10)) + (Math.floor(n1 / 10) * (n2 % 10)) >= 10
+        );
+    } else if (currentLevel === 2) { // 繰り上がり1回程度
+        n1 = Math.floor(Math.random() * 90) + 10;
         n2 = Math.floor(Math.random() * 90) + 10;
-
-        const carries = countCarries(n1, n2);
-
-        if (currentLevel === 1 && carries <= 1) found = true; // 繰り上がり0~1回
-        else if (currentLevel === 2 && carries >= 2 && carries <= 3) found = true; // 繰り上がり2~3回
-        else if (currentLevel === 3 && carries >= 4) found = true; // 繰り上がり4回以上
+    } else if (currentLevel === 3) { // 連続繰り上がり（大きめの数）
+        n1 = Math.floor(Math.random() * 40) + 60; // 60~99
+        n2 = Math.floor(Math.random() * 40) + 60; // 60~99
+    } else if (currentLevel === 4) { // 3桁 × 2桁
+        n1 = Math.floor(Math.random() * 900) + 100; // 100~999
+        n2 = Math.floor(Math.random() * 90) + 10; // 10~99
     }
 
     currentProblem = {
@@ -106,7 +116,13 @@ function generateQuestion() {
     };
 
     // UIにセット
-    document.getElementById('val-r1-10').textContent = Math.floor(n1 / 10);
+    if (currentLevel === 4) {
+        document.getElementById('val-r1-100').textContent = Math.floor(n1 / 100);
+        document.getElementById('val-r1-10').textContent = Math.floor((n1 % 100) / 10);
+    } else {
+        document.getElementById('val-r1-100').textContent = "";
+        document.getElementById('val-r1-10').textContent = Math.floor(n1 / 10);
+    }
     document.getElementById('val-r1-1').textContent = n1 % 10;
     document.getElementById('val-r2-10').textContent = Math.floor(n2 / 10);
     document.getElementById('val-r2-1').textContent = n2 % 10;
@@ -142,37 +158,63 @@ function setupCarries(n1, n2) {
     // 全ての繰り上がりマスを非表示
     document.querySelectorAll('.carry').forEach(el => el.style.display = 'none');
 
-    const n1_1 = n1 % 10, n1_10 = Math.floor(n1 / 10);
-    const n2_1 = n2 % 10, n2_10 = Math.floor(n2 / 10);
+    const n1_1 = n1 % 10;
+    const n1_10 = Math.floor((n1 % 100) / 10);
+    const n1_100 = Math.floor(n1 / 100);
+    const n2_1 = n2 % 10;
+    const n2_10 = Math.floor(n2 / 10);
 
     // 1段目 (n1 * n2_1)
-    const carry1 = Math.floor((n1_1 * n2_1) / 10);
-    if (carry1 > 0) document.getElementById('carry-mul-r3-10').style.display = 'flex';
+    const carry1_10 = Math.floor((n1_1 * n2_1) / 10);
+    if (carry1_10 > 0) document.getElementById('carry-mul-r3-10').style.display = 'flex';
+
+    // 3桁×2桁用の百の位への繰り上がり
+    if (currentLevel === 4) {
+        const carry1_100 = Math.floor(((n1_10 * n2_1) + carry1_10) / 10);
+        const el = document.getElementById('carry-mul-r3-100');
+        if (el && carry1_100 > 0) el.style.display = 'flex';
+    }
 
     // 2段目 (n1 * n2_10)
-    const carry2 = Math.floor((n1_1 * n2_10) / 10);
-    if (carry2 > 0) document.getElementById('carry-mul-r4-100').style.display = 'flex';
+    const carry2_100 = Math.floor((n1_1 * n2_10) / 10);
+    if (carry2_100 > 0) document.getElementById('carry-mul-r4-100').style.display = 'flex';
+
+    // 3桁×2桁用の千の位への繰り上がり
+    if (currentLevel === 4) {
+        const carry2_1000 = Math.floor(((n1_10 * n2_10) + carry2_100) / 10);
+        const el = document.getElementById('carry-mul-r4-1000');
+        if (el && carry2_1000 > 0) el.style.display = 'flex';
+    }
 
     // 足し算
     let p1 = n1 * n2_1;
     let p2 = n1 * n2_10 * 10;
-    let sumStr1 = p1.toString().padStart(4, '0');
-    let sumStr2 = p2.toString().padStart(4, '0');
+    let sumStr1 = p1.toString().padStart(5, '0');
+    let sumStr2 = p2.toString().padStart(5, '0');
 
     let addCarry = 0;
     // 一の位
-    if (parseInt(sumStr1[3]) + parseInt(sumStr2[3]) >= 10) {
+    if (parseInt(sumStr1[4]) + parseInt(sumStr2[4]) >= 10) {
         addCarry = 1; document.getElementById('carry-add-r4-10').style.display = 'flex';
     } else addCarry = 0;
 
     // 十の位
-    if (parseInt(sumStr1[2]) + parseInt(sumStr2[2]) + addCarry >= 10) {
+    if (parseInt(sumStr1[3]) + parseInt(sumStr2[3]) + addCarry >= 10) {
         addCarry = 1; document.getElementById('carry-add-r4-100').style.display = 'flex';
     } else addCarry = 0;
 
     // 百の位
+    if (parseInt(sumStr1[2]) + parseInt(sumStr2[2]) + addCarry >= 10) {
+        addCarry = 1;
+        const el = document.getElementById('carry-add-r4-1000');
+        if (el) el.style.display = 'flex';
+    } else addCarry = 0;
+
+    // 千の位
     if (parseInt(sumStr1[1]) + parseInt(sumStr2[1]) + addCarry >= 10) {
-        addCarry = 1; document.getElementById('carry-add-r4-1000').style.display = 'flex';
+        addCarry = 1;
+        const el = document.getElementById('carry-add-r4-10000');
+        if (el) el.style.display = 'flex';
     } else addCarry = 0;
 }
 
@@ -360,14 +402,19 @@ function handleSwipe2() {
 function checkRow1() {
     if (gameState !== 1) return;
 
-    const p1 = currentProblem.partial1.toString().padStart(4, '0');
-    const u1 = getVal('val-r3-1'), u10 = getVal('val-r3-10'), u100 = getVal('val-r3-100'), u1000 = getVal('val-r3-1000');
-    const userAnsStr = `${u1000 || 0}${u100 || 0}${u10 || 0}${u1 || 0}`;
+    const p1 = currentProblem.partial1.toString().padStart(5, '0');
+    const u1 = getVal('val-r3-1'), u10 = getVal('val-r3-10'), u100 = getVal('val-r3-100'), u1000 = getVal('val-r3-1000'), u10000 = getVal('val-r3-10000');
+    const userAnsStr = `${u10000 || 0}${u1000 || 0}${u100 || 0}${u10 || 0}${u1 || 0}`;
 
-    const n1 = currentProblem.num1;
+    const n1_1 = currentProblem.num1 % 10;
+    const n1_10 = Math.floor((currentProblem.num1 % 100) / 10);
     const n2_1 = currentProblem.num2 % 10;
-    const carry1 = Math.floor((n1 % 10) * n2_1 / 10);
-    const carry1_user = getVal('carry-mul-r3-10');
+
+    const carry1_10 = Math.floor(n1_1 * n2_1 / 10);
+    const carry1_100 = currentLevel === 4 ? Math.floor(((n1_10 * n2_1) + carry1_10) / 10) : 0;
+
+    const carry1_user_10 = getVal('carry-mul-r3-10');
+    const carry1_user_100 = getVal('carry-mul-r3-100');
 
     let isCorrect = true;
     let hintMsg = "";
@@ -386,14 +433,18 @@ function checkRow1() {
     if (parseInt(userAnsStr) !== currentProblem.partial1) {
         isCorrect = false;
         hintMsg = "こたえが ちがうみたい。";
-        // どのマスが間違っているか厳密には判定しづらいが、全体を赤くする
-        showError(['val-r3-1', 'val-r3-10', 'val-r3-100', 'val-r3-1000']);
+        showError(['val-r3-1', 'val-r3-10', 'val-r3-100', 'val-r3-1000', 'val-r3-10000']);
     }
 
-    if (carry1 > 0 && carry1_user !== carry1) {
+    if (carry1_10 > 0 && carry1_user_10 !== carry1_10) {
         isCorrect = false;
-        hintMsg = carry1_user === null ? "くりあがりを わすれていないかな？" : "くりあがりの かずが ちがうみたい。";
+        hintMsg = carry1_user_10 === null ? "くりあがりを わすれていないかな？" : "くりあがりの かずが ちがうみたい。";
         showError(['carry-mul-r3-10']);
+    }
+    if (currentLevel === 4 && carry1_100 > 0 && carry1_user_100 !== carry1_100) {
+        isCorrect = false;
+        hintMsg = carry1_user_100 === null ? "百の位のくりあがりを わすれていないかな？" : "百の位のくりあがりの かずが ちがうみたい。";
+        showError(['carry-mul-r3-100']);
     }
 
     if (isCorrect) {
@@ -403,7 +454,7 @@ function checkRow1() {
     } else {
         wrongCountRow1++;
         if (wrongCountRow1 >= 2) {
-            setHint(`ヒント: くりあがりは ${carry1 > 0 ? carry1 : 'なし'}、こたえは ${currentProblem.partial1} だよ。なおしてもういちど！`);
+            setHint(`ヒント: こたえは ${currentProblem.partial1} だよ。なおしてもういちど！`);
         } else {
             setHint(hintMsg + " もういちど やってみよう！");
         }
@@ -414,13 +465,18 @@ function checkRow2() {
     if (gameState !== 2) return;
 
     const p2 = currentProblem.partial2.toString().padStart(4, '0');
-    const u10 = getVal('val-r4-10'), u100 = getVal('val-r4-100'), u1000 = getVal('val-r4-1000');
-    const userAnsStr = `${u1000 || 0}${u100 || 0}${u10 || 0}0`;
+    const u10 = getVal('val-r4-10'), u100 = getVal('val-r4-100'), u1000 = getVal('val-r4-1000'), u10000 = getVal('val-r4-10000');
+    const userAnsStr = `${u10000 || 0}${u1000 || 0}${u100 || 0}${u10 || 0}0`;
 
-    const n1 = currentProblem.num1;
+    const n1_1 = currentProblem.num1 % 10;
+    const n1_10 = Math.floor((currentProblem.num1 % 100) / 10);
     const n2_10 = Math.floor(currentProblem.num2 / 10);
-    const carry2 = Math.floor((n1 % 10) * n2_10 / 10);
-    const carry2_user = getVal('carry-mul-r4-100');
+
+    const carry2_100 = Math.floor(n1_1 * n2_10 / 10);
+    const carry2_1000 = currentLevel === 4 ? Math.floor(((n1_10 * n2_10) + carry2_100) / 10) : 0;
+
+    const carry2_user_100 = getVal('carry-mul-r4-100');
+    const carry2_user_1000 = getVal('carry-mul-r4-1000');
 
     let isCorrect = true;
     let hintMsg = "";
@@ -438,13 +494,19 @@ function checkRow2() {
     if (parseInt(userAnsStr) !== currentProblem.partial2 * 10) {
         isCorrect = false;
         hintMsg = "こたえが ちがうみたい。かずを書くばしょに気をつけて！";
-        showError(['val-r4-10', 'val-r4-100', 'val-r4-1000']);
+        showError(['val-r4-10', 'val-r4-100', 'val-r4-1000', 'val-r4-10000']);
     }
 
-    if (carry2 > 0 && carry2_user !== carry2) {
+    if (carry2_100 > 0 && carry2_user_100 !== carry2_100) {
         isCorrect = false;
-        hintMsg = carry2_user === null ? "くりあがりを わすれていないかな？" : "くりあがりの かずが ちがうみたい。";
+        hintMsg = carry2_user_100 === null ? "百の位のくりあがりを わすれていないかな？" : "百の位のくりあがりの かずが ちがうみたい。";
         showError(['carry-mul-r4-100']);
+    }
+
+    if (currentLevel === 4 && carry2_1000 > 0 && carry2_user_1000 !== carry2_1000) {
+        isCorrect = false;
+        hintMsg = carry2_user_1000 === null ? "千の位のくりあがりを わすれていないかな？" : "千の位のくりあがりの かずが ちがうみたい。";
+        showError(['carry-mul-r4-1000']);
     }
 
     if (isCorrect) {
@@ -456,7 +518,7 @@ function checkRow2() {
     } else {
         wrongCountRow2++;
         if (wrongCountRow2 >= 2) {
-            setHint(`ヒント: くりあがりは ${carry2 > 0 ? carry2 : 'なし'}、こたえは ${currentProblem.partial2} だよ。`);
+            setHint(`ヒント: こたえは ${currentProblem.partial2} だよ。`);
         } else {
             setHint(hintMsg + " もういちど！");
         }
@@ -466,18 +528,19 @@ function checkRow2() {
 function checkSum() {
     if (gameState !== 4) return;
 
-    const u1 = getVal('val-r5-1'), u10 = getVal('val-r5-10'), u100 = getVal('val-r5-100'), u1000 = getVal('val-r5-1000');
-    const userSum = parseInt(`${u1000 || 0}${u100 || 0}${u10 || 0}${u1 || 0}`);
+    const u1 = getVal('val-r5-1'), u10 = getVal('val-r5-10'), u100 = getVal('val-r5-100'), u1000 = getVal('val-r5-1000'), u10000 = getVal('val-r5-10000');
+    const userSum = parseInt(`${u10000 || 0}${u1000 || 0}${u100 || 0}${u10 || 0}${u1 || 0}`);
 
     let p1 = currentProblem.partial1;
     let p2 = currentProblem.partial2 * 10;
-    let sumStr1 = p1.toString().padStart(4, '0');
-    let sumStr2 = p2.toString().padStart(4, '0');
-    let c10 = 0, c100 = 0, c1000 = 0;
+    let sumStr1 = p1.toString().padStart(5, '0');
+    let sumStr2 = p2.toString().padStart(5, '0');
+    let c10 = 0, c100 = 0, c1000 = 0, c10000 = 0;
 
-    if (parseInt(sumStr1[3]) + parseInt(sumStr2[3]) >= 10) c10 = 1;
-    if (parseInt(sumStr1[2]) + parseInt(sumStr2[2]) + c10 >= 10) c100 = 1;
-    if (parseInt(sumStr1[1]) + parseInt(sumStr2[1]) + c100 >= 10) c1000 = 1;
+    if (parseInt(sumStr1[4]) + parseInt(sumStr2[4]) >= 10) c10 = 1;
+    if (parseInt(sumStr1[3]) + parseInt(sumStr2[3]) + c10 >= 10) c100 = 1;
+    if (parseInt(sumStr1[2]) + parseInt(sumStr2[2]) + c100 >= 10) c1000 = 1;
+    if (parseInt(sumStr1[1]) + parseInt(sumStr2[1]) + c1000 >= 10) c10000 = 1;
 
     let isCorrect = true;
     let hintMsg = "たしざんが ちがうみたい。もういちど！";
@@ -494,12 +557,13 @@ function checkSum() {
 
     if (userSum !== currentProblem.sum) {
         isCorrect = false;
-        showError(['val-r5-1', 'val-r5-10', 'val-r5-100', 'val-r5-1000']);
+        showError(['val-r5-1', 'val-r5-10', 'val-r5-100', 'val-r5-1000', 'val-r5-10000']);
     }
 
-    if (c10 > 0 && getVal('carry-add-r4-10') !== c10) { isCorrect = false; hintMsg = "たし算の くりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-10']); }
-    if (c100 > 0 && getVal('carry-add-r4-100') !== c100) { isCorrect = false; hintMsg = "たし算の くりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-100']); }
-    if (c1000 > 0 && getVal('carry-add-r4-1000') !== c1000) { isCorrect = false; hintMsg = "たし算の くりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-1000']); }
+    if (c10 > 0 && getVal('carry-add-r4-10') !== c10) { isCorrect = false; hintMsg = "たし算の 十の位へのくりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-10']); }
+    if (c100 > 0 && getVal('carry-add-r4-100') !== c100) { isCorrect = false; hintMsg = "たし算の 百の位へのくりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-100']); }
+    if (c1000 > 0 && getVal('carry-add-r4-1000') !== c1000) { isCorrect = false; hintMsg = "たし算の 千の位へのくりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-1000']); }
+    if (c10000 > 0 && getVal('carry-add-r4-10000') !== c10000) { isCorrect = false; hintMsg = "たし算の 万の位へのくりあがりを 書きわすれてるよ！"; showError(['carry-add-r4-10000']); }
 
     if (isCorrect) {
         setHint("だいせいかい！！ よくがんばったね。");
@@ -574,7 +638,7 @@ function updateOkButtonGlow() {
         if (!currentProblem) return;
         const p1Len = currentProblem.partial1.toString().length;
         let count = 0;
-        ['val-r3-1', 'val-r3-10', 'val-r3-100', 'val-r3-1000'].forEach(id => {
+        ['val-r3-1', 'val-r3-10', 'val-r3-100', 'val-r3-1000', 'val-r3-10000'].forEach(id => {
             if (getVal(id) !== null) count++;
         });
         if (count >= p1Len) okBtn.classList.add('glow');
@@ -582,7 +646,7 @@ function updateOkButtonGlow() {
         if (!currentProblem) return;
         const p2Len = currentProblem.partial2.toString().length;
         let count = 0;
-        ['val-r4-10', 'val-r4-100', 'val-r4-1000'].forEach(id => {
+        ['val-r4-10', 'val-r4-100', 'val-r4-1000', 'val-r4-10000'].forEach(id => {
             if (getVal(id) !== null) count++;
         });
         if (count >= p2Len) okBtn.classList.add('glow');
@@ -590,7 +654,7 @@ function updateOkButtonGlow() {
         if (!currentProblem) return;
         const sumLen = currentProblem.sum.toString().length;
         let count = 0;
-        ['val-r5-1', 'val-r5-10', 'val-r5-100', 'val-r5-1000'].forEach(id => {
+        ['val-r5-1', 'val-r5-10', 'val-r5-100', 'val-r5-1000', 'val-r5-10000'].forEach(id => {
             if (getVal(id) !== null) count++;
         });
         if (count >= sumLen) okBtn.classList.add('glow');

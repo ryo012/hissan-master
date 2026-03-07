@@ -193,6 +193,13 @@ function getHtmlContent() {
       text-shadow: 1px 1px 1px #000000;
       box-shadow: inset -1px -1px 3px rgba(0,0,0,0.5), 0 0 5px rgba(255,202,40,0.8); /* 金色の淡い光沢 */
     }
+
+    /* レベル4: 青 */
+    .level-4 {
+      background: radial-gradient(circle at top left, #4fc3f7, #0277bd);
+      border: 1px solid #005662;
+      text-shadow: 1px 1px 1px #01579b;
+    }
     
     @keyframes dropBtn {
       0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
@@ -260,6 +267,7 @@ function getHtmlContent() {
     <div class="rule-badge">レベル1<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">繰り上がりなし</span>1問 = <span>1</span>トークン</div>
     <div class="rule-badge">レベル2<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">繰り上がりあり</span>1問 = <span>2</span>トークン</div>
     <div class="rule-badge">レベル3<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">連続繰り上がり</span>1問 = <span>3</span>トークン</div>
+    <div class="rule-badge" style="border-color: #03a9f4;">レベル4<br><span style="font-size: 0.9rem; color: #666; display: block; margin-top: 3px;">3けた×2けた</span>1問 = <span style="color: #03a9f4;">4</span>トークン</div>
   </div>
   
   <div class="container">
