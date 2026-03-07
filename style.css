@@ -92,7 +92,7 @@ body {
 
 .hissan-grid {
     display: grid;
-    grid-template-columns: repeat(4, 80px);
+    grid-template-columns: repeat(5, 80px);
     grid-template-rows: 40px repeat(5, 80px);
     position: relative;
     /* スワイプ線を絶対配置する基準 */
